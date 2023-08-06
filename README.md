@@ -1,10 +1,10 @@
 # ./app/
 
-firmware of application
+firmware of application，0x08003000~0x0800FFFF
 
 # ./iap/
 
-firmware of iap
+firmware of iap，0x08000000~0x08002FFF
 
 # ./iapDownloadTool
 
