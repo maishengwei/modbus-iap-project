@@ -13,6 +13,11 @@ static uint32_t comHandleCount = 0;
 static uint8_t com_txBuf[COM_TX_MAX_SIZE] = {0};
 static uint32_t com_txBufLen = 0;
 
+#ifdef DEMO_1
+    static uint16_t signReg = 0xAA55;
+#elif defined DEMO_2
+    static uint16_t signReg = 0xA5B5;
+#endif
 enum COM_RX_STATE{
     COM_ADDR_S,
     COM_CMD_S,
@@ -213,8 +218,8 @@ void comParseData(uint8_t * buf, uint8_t len){
             com_txBuf[com_txBufLen++] = cmd;
             com_txBuf[com_txBufLen++] = data * 2;
             for(i=0,j=regAddr; i<data*2; i+=2,j++){
-                com_txBuf[com_txBufLen + i] = HIGH_BYTE(0xAA55);
-                com_txBuf[com_txBufLen + i + 1] = LOW_BYTE(0xAA55);
+                com_txBuf[com_txBufLen + i] = HIGH_BYTE(signReg);
+                com_txBuf[com_txBufLen + i + 1] = LOW_BYTE(signReg);
             }
             com_txBufLen += data * 2;
             crc16 = getCRC16(com_txBuf, com_txBufLen);

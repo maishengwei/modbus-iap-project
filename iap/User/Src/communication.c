@@ -152,7 +152,8 @@ void comPollingData(void){
             ++state;
             break;
         case COM_CRC_L_S:
-            if(data == 2 * (uint16_t)((dataBuf[4]<<8) | dataBuf[5])){
+            if((data == 2 * (uint16_t)((dataBuf[4]<<8) | dataBuf[5])) &&\
+               (extraDataCount == 0)){
                 dataBuf[dataLen++] = data;
                 state = COM_EXTRA_DATA;
                 extraDataCount = 0;
@@ -169,6 +170,7 @@ void comPollingData(void){
             }
             state = COM_ADDR_S;
             dataLen = 0;
+            extraDataCount = 0;
             crc16 = 0;
             break;
         case COM_EXTRA_DATA:

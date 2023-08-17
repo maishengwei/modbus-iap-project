@@ -242,7 +242,7 @@ uint32_t FLASH_If_Write128Byte(uint16_t fileIndex, uint8_t *dataBuf, uint8_t dat
     /* program flash from updated ram */
     // erase first
     FLASH_If_Erase(ADDR_FLASH_PAGE(flashPageIndex),\
-        ADDR_FLASH_PAGE(flashPageIndex + 1));
+        ADDR_FLASH_PAGE((flashPageIndex + 1)));
     // program
     return FLASH_If_Write(ADDR_FLASH_PAGE(flashPageIndex),\
         (uint32_t *)flashPageBackup, FLASH_PAGE_SIZE/4);
