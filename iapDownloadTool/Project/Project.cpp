@@ -118,7 +118,7 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
     wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_PROJECT);
     wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_PROJECT));
 
     return RegisterClassExW(&wcex);
 }
@@ -336,7 +336,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         }
                         else {
                             SendMessage(hwndEditCmd, WM_SETTEXT, NULL, (LPARAM)editCmdStrBuf);
-                            SendMessage(hwndEditCmd, EM_SETSEL, bufSize-1, bufSize-1);  // 设置光标
+                            // 设置光标
+                            SendMessage(hwndEditCmd, EM_SETSEL, bufSize - 1, bufSize - 1);
                             break;
                         }
                     }
@@ -556,6 +557,7 @@ INT_PTR CALLBACK Communicate(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
             EndDialog(hDlg, LOWORD(wParam));
             return (INT_PTR)TRUE;
         case IDC_BUTTON_REFRESH:
+            SendDlgItemMessage(hDlg, IDC_COMBO_PORT, CB_RESETCONTENT, NULL, NULL);
             enumDetailsSerialPorts(spInfo);
             for (UINT i = 0; i < spInfo.size(); i++) {
                 wsprintf(tempStringBuf, TEXT("%s %s"),

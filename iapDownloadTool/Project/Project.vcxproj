@@ -172,6 +172,8 @@
     <ResourceCompile Include="Project.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="author.ico" />
+    <Image Include="download.ico" />
     <Image Include="Project.ico" />
     <Image Include="send.ico" />
     <Image Include="small.ico" />

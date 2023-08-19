@@ -63,5 +63,11 @@
     <Image Include="send.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="download.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="author.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

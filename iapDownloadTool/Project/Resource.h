@@ -17,6 +17,7 @@
 #define IDD_CONNECTBOX                  129
 #define IDI_ICON_REFRESH                131
 #define IDI_ICON_SEND                   132
+#define IDI_ICON_AUTHOR                 133
 #define IDC_COMBO_PORT                  1000
 #define IDC_BUTTON_REFRESH              1001
 #define IDC_COMBO_BAUDRATE              1003
@@ -38,7 +39,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        133
+#define _APS_NEXT_RESOURCE_VALUE        134
 #define _APS_NEXT_COMMAND_VALUE         32775
 #define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           111
