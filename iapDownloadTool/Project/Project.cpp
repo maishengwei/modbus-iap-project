@@ -38,6 +38,7 @@ static HWND hwndEditDevAddr;                    // 设备地址
 static HWND hwndEditCmd;                        // 指令
 static HWND hwndEditCRC;                        // CRC16
 static HWND hwndButtonSend;                     // 发送按钮
+static HFONT hFont;                             // 字体
 BOOL isStartEdit = FALSE;
 TCHAR editCmdStrBuf[MAX_STR_SIZE] = { 0 };
 // modbus相关
@@ -65,7 +66,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    // TODO: 在此处放置代码。
+    // 设置字体
+    hFont = CreateFont(16, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, \
+        0, 0, 0, 0, TEXT("宋体"));
 
     // 初始化全局字符串
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -233,6 +236,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         SendMessage(hwndEditDevAddr, WM_SETTEXT, NULL, (LPARAM)TEXT("设备地址"));
         SendMessage(hwndEditCmd, WM_SETTEXT, NULL, (LPARAM)TEXT("指令"));
         SendMessage(hwndEditCRC, WM_SETTEXT, NULL, (LPARAM)TEXT("CRC16"));
+        // 设置子窗口控件字体
+        SendMessage(hwndDisplayWin, WM_SETFONT, (WPARAM)hFont, FALSE);
+        SendMessage(hwndEditDevAddr, WM_SETFONT, (WPARAM)hFont, FALSE);
+        SendMessage(hwndEditCmd, WM_SETFONT, (WPARAM)hFont, FALSE);
+        SendMessage(hwndEditCRC, WM_SETFONT, (WPARAM)hFont, FALSE);
+        // 开启定时器
         SetTimer(hWnd, IDT_TIMER_CRC_CAL, CRC_CAL_TIMEOUT, TimerProc);
         break;
     case WM_SIZE:
@@ -443,6 +452,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
+        disconnectSerialPort();
         KillTimer(hWnd, IDT_TIMER_CRC_CAL);
         PostQuitMessage(0);
         break;
@@ -607,8 +617,9 @@ unsigned short getCRC16(volatile uint8_t *ptr, uint8_t len)
 VOID translateStrToHex(PTCHAR str, PUINT8 hexBuf, PUINT8 hexBufLen) {
     TCHAR tempChar[2] = { 0 };
     INT i = 0;
+    INT strLen = _tcslen(str);
     *hexBufLen = 0;
-    while (str[i] != TEXT('\0')) {
+    while (i <= strLen) {
         tempChar[0] = str[i];
         if (str[i + 1] != TEXT('\0')) {
             tempChar[1] = str[i + 1];

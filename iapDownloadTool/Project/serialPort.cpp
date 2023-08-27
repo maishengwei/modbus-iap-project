@@ -119,11 +119,22 @@ BOOL isSerialPortConnected(VOID) {
 // https://www.cnblogs.com/flylong0204/articles/5354690.html
 std::wstring stringToWstring(std::string str)
 {
-    if (str.length() == 0)
-        return L"";
+    LPCSTR pszSrc = str.c_str();
+    INT nLen = MultiByteToWideChar(CP_ACP, 0, pszSrc, -1, NULL, 0);
+    if (nLen == 0) {
+        return wstring(L"");
+    }
 
-    std::wstring wstr;
-    wstr.assign(str.begin(), str.end());
+    wchar_t* pwszDst = new wchar_t[nLen];
+    if (!pwszDst) {
+        return wstring(L"");
+    }
+
+    MultiByteToWideChar(CP_ACP, 0, pszSrc, -1, pwszDst, nLen);
+    wstring wstr(pwszDst);
+    delete[] pwszDst;
+    pwszDst = NULL;
+
     return wstr;
 }
 

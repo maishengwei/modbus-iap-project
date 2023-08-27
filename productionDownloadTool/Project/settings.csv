@@ -1,0 +1,4 @@
+设备名称,版本,iap文件存放路径,app文件存放路径,app起始地址,烧录设置文件
+设备一,版本一,..\..\iap\EWARM\iapMain\Exe\iapMain.bin,..\..\app\EWARM\ledBlink_Demo1\Exe\ledBlink_Demo1.bin,0x08003000,.\JLinkSettings\1.csv
+设备一,版本二,..\..\iap\EWARM\iapMain\Exe\iapMain.bin,..\..\app\EWARM\ledBlink_Demo2\Exe\ledBlink_Demo2.bin,0x08003000,.\JLinkSettings\2.csv
+设备二,版本一,null,null,0x08000000,.\JLinkSettings\3.csv
