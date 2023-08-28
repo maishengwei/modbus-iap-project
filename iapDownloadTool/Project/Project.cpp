@@ -454,6 +454,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         disconnectSerialPort();
         KillTimer(hWnd, IDT_TIMER_CRC_CAL);
+		DeleteObject(hFont);
         PostQuitMessage(0);
         break;
     default:

@@ -98,7 +98,8 @@ VOID disconnectSerialPort(VOID) {
 }
 
 VOID serialPortTransmit(PUINT8 buf, UINT len) {
-    WriteFile(serialPortHandle, buf, len, NULL, NULL);
+	DWORD temp = 0;
+    WriteFile(serialPortHandle, buf, len, &temp, NULL);
 }
 
 VOID serialPortReceive(PUINT8 buf, PUINT8 len, UINT timeout) {
@@ -109,7 +110,8 @@ VOID serialPortReceive(PUINT8 buf, PUINT8 len, UINT timeout) {
     ClearCommError(serialPortHandle, &dwErrors, &Rcs);
     *len = Rcs.cbInQue & 0xFF;
     //¶Á
-    ReadFile(serialPortHandle, buf, (*len), NULL, NULL);
+	DWORD temp = 0;
+    ReadFile(serialPortHandle, buf, (*len), &temp, NULL);
 }
 
 BOOL isSerialPortConnected(VOID) {
@@ -119,6 +121,13 @@ BOOL isSerialPortConnected(VOID) {
 // https://www.cnblogs.com/flylong0204/articles/5354690.html
 std::wstring stringToWstring(std::string str)
 {
+#if 0
+	if (str.length() == 0)
+		return L"";
+
+	std::wstring wstr;
+	wstr.assign(str.begin(), str.end());
+#else
     LPCSTR pszSrc = str.c_str();
     INT nLen = MultiByteToWideChar(CP_ACP, 0, pszSrc, -1, NULL, 0);
     if (nLen == 0) {
@@ -134,7 +143,7 @@ std::wstring stringToWstring(std::string str)
     wstring wstr(pwszDst);
     delete[] pwszDst;
     pwszDst = NULL;
-
+#endif
     return wstr;
 }
 
