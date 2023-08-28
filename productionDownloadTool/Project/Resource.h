@@ -6,8 +6,8 @@
 #define IDD_ABOUTBOX            103
 #define IDM_ABOUT               104
 #define IDM_EXIT                105
-#define IDI_ICON_AUTHOR         106
-#define IDI_PROJECT             107
+#define IDI_PROJECT             106
+#define IDI_ICON_AUTHOR         107
 #define IDC_PROJECT             109
 #define IDC_GROUPBOX_FILE       1000
 #define IDC_STATIC_IAP          1001
