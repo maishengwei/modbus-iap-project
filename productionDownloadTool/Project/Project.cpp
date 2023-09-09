@@ -651,7 +651,6 @@ static INT binFileMerge(string file1, string file2, string mergeFile, string fil
     if (fp1 == NULL) {
         return -1;
     }
-    // 复制file1
     FILE *mfp = NULL;
     fopen_s(&mfp, mergeFile.c_str(), "wb");
     INT count = 0;
@@ -810,6 +809,7 @@ VOID downloadProc(VOID) {
             outfile << "Device " << jlinkSetting.device.c_str() << endl;
             outfile << "R" << endl;
             outfile << "H" << endl;
+            outfile << "Erase" << endl;
             outfile << "LoadFile .\\cache\\mergeFile.bin 0x08000000" << endl;
             outfile << "VerifyBin .\\cache\\mergeFile.bin 0x08000000" << endl;
             outfile << "G" << endl;

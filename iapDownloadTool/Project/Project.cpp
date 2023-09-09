@@ -13,11 +13,9 @@
     processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 #define MAX_LOADSTRING          100
-#define MWIND_MIN_WIDTH         550
-#define MWIND_MIN_HEIGHT        450
 #define EDIT_HEIGHT_OFFSET      45
 #define EDIT_WIDTH_OFFSET       1
-#define MAX_STR_SIZE            100
+#define MAX_STR_SIZE            1024
 #define CRC_CAL_TIMEOUT         10      // ms
 #define IAP_DOWNLOAD_PACK_SIZE  128     // bytes
 
@@ -67,7 +65,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // 设置字体
-    hFont = CreateFont(16, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, \
+    hFont = CreateFont(14, 0, 0, 0, 0, 0, 0, 0, DEFAULT_CHARSET, \
         0, 0, 0, 0, TEXT("宋体"));
 
     // 初始化全局字符串
@@ -168,8 +166,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    HINSTANCE hInstance;
-    TCHAR tempStrBuf[MAX_STR_SIZE * 2] = { 0 };
+    TCHAR tempStrBuf[MAX_STR_SIZE] = { 0 };
     RECT rect;
     INT statusH = 0;
     INT interval = 0, cx = 0, cy = 0;
@@ -210,29 +207,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         hMenu = GetMenu(hWnd);
-        hInstance = ((LPCREATESTRUCT)lParam)->hInstance;
         hwndStatus = CreateWindowEx(0, TEXT("msctls_statusbar32"), NULL,
             WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, hWnd, (HMENU)IDC_STATUSBAR,
-            hInstance, NULL);
+            hInst, NULL);
         SendMessage(hwndStatus, SB_SETTEXT, 0, (LPARAM)TEXT("就绪"));
         hwndDisplayWin = CreateWindowEx(0, TEXT("Edit"), NULL,
             WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
             ES_LEFT | ES_AUTOVSCROLL | ES_READONLY | ES_MULTILINE| ES_WANTRETURN,
-            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_DISPLAY, hInstance, NULL);
+            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_DISPLAY, hInst, NULL);
         hwndEditDevAddr = CreateWindowEx(0, TEXT("Edit"), NULL,
             WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_CENTER | ES_NUMBER,
-            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_DEVADDR, hInstance, NULL);
+            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_DEVADDR, hInst, NULL);
         hwndEditCmd = CreateWindowEx(0, TEXT("Edit"), NULL,
             WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_UPPERCASE,
-            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_COMMAND, hInstance, NULL);
+            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_COMMAND, hInst, NULL);
         hwndEditCRC = CreateWindowEx(0, TEXT("Edit"), NULL,
             WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL | ES_READONLY,
-            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_CRC16, hInstance, NULL);
+            0, 0, 0, 0, hWnd, (HMENU)IDC_EDIT_CRC16, hInst, NULL);
         hwndButtonSend = CreateWindowEx(0, TEXT("Button"), NULL,
             WS_CHILD | WS_VISIBLE | WS_BORDER | BS_PUSHBUTTON | BS_ICON,
-            0, 0, 0, 0, hWnd, (HMENU)IDC_BUTTON_SEND, hInstance, NULL);
+            0, 0, 0, 0, hWnd, (HMENU)IDC_BUTTON_SEND, hInst, NULL);
         SendDlgItemMessage(hWnd, IDC_BUTTON_SEND, BM_SETIMAGE, IMAGE_ICON, \
-            (LPARAM)LoadImage(hInstance, MAKEINTRESOURCE(IDI_ICON_SEND), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
+            (LPARAM)LoadImage(hInst, MAKEINTRESOURCE(IDI_ICON_SEND), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR));
         SendMessage(hwndEditDevAddr, WM_SETTEXT, NULL, (LPARAM)TEXT("设备地址"));
         SendMessage(hwndEditCmd, WM_SETTEXT, NULL, (LPARAM)TEXT("指令"));
         SendMessage(hwndEditCRC, WM_SETTEXT, NULL, (LPARAM)TEXT("CRC16"));
@@ -246,30 +242,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case WM_SIZE:
         GetWindowRect(hWnd, &rect);
-        if (((rect.right - rect.left) < MWIND_MIN_WIDTH) || \
-            ((rect.bottom - rect.top) < MWIND_MIN_HEIGHT)) {
-            SetWindowPos(hWnd, HWND_TOP, 0, 0, MWIND_MIN_WIDTH, MWIND_MIN_HEIGHT, SWP_NOMOVE | SWP_NOZORDER);
-        }
-        else {
-            SendMessage(hwndStatus, WM_SIZE, 0, 0);
-            SendMessage(hwndStatus, SB_GETRECT, 0, (LPARAM)&rect);
-            statusH = rect.bottom - rect.top;
-            MoveWindow(hwndDisplayWin, EDIT_WIDTH_OFFSET, 0,
-                LOWORD(lParam) - EDIT_WIDTH_OFFSET * 2,
-                HIWORD(lParam) - EDIT_HEIGHT_OFFSET, TRUE);
-            // 2 : 9 : 3 : 2
-            interval = (LOWORD(lParam) - EDIT_WIDTH_OFFSET * 2) / (u16Buf[0] + u16Buf[1] + u16Buf[2] + u16Buf[3]);
-            cx = 1, cy = HIWORD(lParam) - EDIT_HEIGHT_OFFSET;
-            MoveWindow(hwndEditDevAddr, cx, cy, interval * u16Buf[0], EDIT_HEIGHT_OFFSET - statusH, TRUE);
-            cx += interval * u16Buf[0];
-            MoveWindow(hwndEditCmd, cx, cy, interval * u16Buf[1], EDIT_HEIGHT_OFFSET - statusH, TRUE);
-            cx += interval * u16Buf[1];
-            MoveWindow(hwndEditCRC, cx, cy, interval * u16Buf[2], EDIT_HEIGHT_OFFSET - statusH, TRUE);
-            cx += interval * u16Buf[2];
-            MoveWindow(hwndButtonSend, cx, cy,\
-                (LOWORD(lParam) - EDIT_WIDTH_OFFSET * 2 - interval * (u16Buf[0] + u16Buf[1] + u16Buf[2])),\
-                EDIT_HEIGHT_OFFSET - statusH, TRUE);
-        }
+        SendMessage(hwndStatus, WM_SIZE, 0, 0);
+        SendMessage(hwndStatus, SB_GETRECT, 0, (LPARAM)&rect);
+        statusH = rect.bottom - rect.top;
+        MoveWindow(hwndDisplayWin, EDIT_WIDTH_OFFSET, 0,
+            LOWORD(lParam) - EDIT_WIDTH_OFFSET * 2,
+            HIWORD(lParam) - EDIT_HEIGHT_OFFSET, TRUE);
+        // 2 : 9 : 3 : 2
+        interval = (LOWORD(lParam) - EDIT_WIDTH_OFFSET * 2) / (u16Buf[0] + u16Buf[1] + u16Buf[2] + u16Buf[3]);
+        cx = 1, cy = HIWORD(lParam) - EDIT_HEIGHT_OFFSET;
+        MoveWindow(hwndEditDevAddr, cx, cy, interval * u16Buf[0], EDIT_HEIGHT_OFFSET - statusH, TRUE);
+        cx += interval * u16Buf[0];
+        MoveWindow(hwndEditCmd, cx, cy, interval * u16Buf[1], EDIT_HEIGHT_OFFSET - statusH, TRUE);
+        cx += interval * u16Buf[1];
+        MoveWindow(hwndEditCRC, cx, cy, interval * u16Buf[2], EDIT_HEIGHT_OFFSET - statusH, TRUE);
+        cx += interval * u16Buf[2];
+        MoveWindow(hwndButtonSend, cx, cy,\
+            (LOWORD(lParam) - EDIT_WIDTH_OFFSET * 2 - interval * (u16Buf[0] + u16Buf[1] + u16Buf[2])),\
+            EDIT_HEIGHT_OFFSET - statusH, TRUE);
         break;
     case WM_COMMAND:
         {
@@ -334,6 +324,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         tempStrBuf[0] = MAX_STR_SIZE;
                         bufSize = SendMessage(hwndEditCmd, EM_GETLINE, 0, (LPARAM)tempStrBuf);
                         if ((_tcscmp(editCmdStrBuf, tempStrBuf) == 0) || (bufSize == 0)) {
+                            if (0 == bufSize) {
+                                ZeroMemory(editCmdStrBuf, sizeof(editCmdStrBuf));
+                            }
                             break;
                         }
                         if (!EditCmdFriendlyUpdate(tempStrBuf, bufSize, editCmdStrBuf, (PUINT)&bufSize)) {
@@ -361,6 +354,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (!isSerialPortConnected()) {
                     MessageBox(hWnd, TEXT("请先连接串口"), TEXT("错误提示"),
                         MB_OK | MB_ICONERROR | MB_APPLMODAL);
+                    break;
                 }
                 if ((editCmdStrBuf[0] == 0) || (-1 == deviceID)) { break; }
                 dataToSend[0] = deviceID;
@@ -657,9 +651,8 @@ VOID CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
     TCHAR tempStr[MAX_STR_SIZE] = { 0 };
     switch (idEvent) {
     case IDT_TIMER_CRC_CAL:
-        if ((editCmdStrBuf[0] == 0) || (-1 == deviceID)){ break; }
+        if (-1 == deviceID){ break; }
         dataBuf[0] = deviceID;
-        if (editCmdStrBuf[0] == 0) { break; }
         translateStrToHex(editCmdStrBuf, dataBuf + 1, &dataLen);
         dataLen += 1;
         crc16 = getCRC16(dataBuf, dataLen);
@@ -670,7 +663,7 @@ VOID CALLBACK TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime) {
 }
 
 BOOL EditCmdFriendlyUpdate(PTCHAR inBuf, UINT inSize, PTCHAR outBuf, PUINT outSize) {
-    INT j = 0;
+    UINT j = 0;
     for (UINT i = 0; i < inSize; i++) {
         BOOL isValid = ((inBuf[i] >= TEXT('0') && inBuf[i] <= TEXT('9')) || \
                         (inBuf[i] >= TEXT('A') && inBuf[i] <= TEXT('F')) || \
@@ -678,13 +671,22 @@ BOOL EditCmdFriendlyUpdate(PTCHAR inBuf, UINT inSize, PTCHAR outBuf, PUINT outSi
         if (!isValid) {
             return FALSE;
         }
-        if (((i+1) % 3 == 0) && (inBuf[i] != TEXT(' '))){
-            outBuf[j++] = TEXT(' ');
+        if (inBuf[i] != TEXT(' ')){
+            outBuf[j++] = inBuf[i];
         }
-        outBuf[j++] = inBuf[i];
     }
-    outBuf[j++] = TEXT('\0');
-    *outSize = j;
+    PTCHAR temp = new TCHAR[j * 2];
+    UINT k = 0;
+    for (UINT i = 0; i < j; i++) {
+        temp[k++] = outBuf[i];
+        if (((i + 1) % 2 == 0) && (i < (j - 1))) {
+            temp[k++] = TEXT(' ');
+        }
+    }
+    memcpy(outBuf, temp, k * sizeof(TCHAR));
+    delete temp;
+    outBuf[k++] = TEXT('\0');
+    *outSize = k;
     return TRUE;
 }
 
