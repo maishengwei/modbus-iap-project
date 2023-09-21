@@ -43,7 +43,7 @@ enum EXE_ACTION_TYPE{
   * @brief  calculate MODBUS CRC16.
   * @retval CRC16
   */
-unsigned short getCRC16(volatile uint8_t *ptr ,uint8_t len)
+unsigned short getCRC16(volatile uint8_t *ptr ,uint16_t len)
 {
     uint8_t  i;
     unsigned short crc = 0xFFFF;
@@ -116,11 +116,11 @@ void communicationInit(void){
 
 void comPollingData(void){
     if(comHandleCount == 0){ return; }
-    uint8_t handleIndex = 0;
+    uint16_t handleIndex = 0;
     uint8_t state = COM_ADDR_S;
-    uint8_t dataBuf[300] = {0};
-    uint8_t dataLen = 0;
-    uint8_t extraDataCount = 0;
+    uint8_t dataBuf[COM_RX_MAX_SIZE] = {0};
+    uint16_t dataLen = 0;
+    uint16_t extraDataCount = 0;
     uint16_t crc16 = 0;
     while(handleIndex < comHandleCount){
         uint8_t data = comHandleBuf[handleIndex++];
@@ -176,7 +176,7 @@ void comPollingData(void){
         case COM_EXTRA_DATA:
             dataBuf[dataLen++] = data;
             extraDataCount++;
-            if(extraDataCount >= dataBuf[6]){
+            if(extraDataCount >= (dataBuf[6] * IAP_PACKAGE_SIZE / 2)){
                 state = COM_CRC_L_S;
             }
             break;
@@ -200,7 +200,7 @@ static uint8_t isRegAddrValid(uint8_t func, uint16_t addrS){
         result = (addrS == 1);
         break;
     case 0x10:
-        result = 1;
+        result = ((addrS % (FLASH_PAGE_SIZE / IAP_PACKAGE_SIZE)) == 0);
         break;
     default:
         break;
@@ -221,7 +221,8 @@ static uint8_t isRegDataValid(uint8_t func, uint16_t addrS, uint16_t data){
         result = (data <= EXE_TOGGLE_FLASHWRP);
         break;
     case 0x10:
-        result = (data <= IAP_PACKAGE_SIZE/2);
+        // max 1024 bytes each transmit, 128 * 8
+        result = (data <= (FLASH_PAGE_SIZE / IAP_PACKAGE_SIZE));
     default:
         break;
     }
@@ -300,12 +301,15 @@ void comParseData(uint8_t * buf, uint8_t len){
     uint8_t cmd = buf[1];
     uint16_t regAddr = ((buf[2]<<8) | buf[3]);
     uint16_t data = ((buf[4]<<8) | buf[5]);
+    uint32_t dataBufLen = 0;
 
     if(isRegAddrValid(cmd, regAddr)){
         COM_ErrorHandle(COM_ADDR_ERR, addr, cmd);
+        return;
     }
     else if(isRegDataValid(cmd, regAddr, data)){
         COM_ErrorHandle(COM_DATA_ERR, addr, cmd);
+        return;
     }
 
     uint16_t crc16 = 0;
@@ -330,8 +334,9 @@ void comParseData(uint8_t * buf, uint8_t len){
         handleExeCmd(addr, cmd, regAddr, data);
         break;
     case 0x10:
+        dataBufLen = (*(buf + 6)) * IAP_PACKAGE_SIZE / 2;
         if(FLASHIF_OK == \
-            FLASH_If_Write128Byte(regAddr, (buf + 7), *(buf + 6))){
+            FLASH_If_Write1KByte(regAddr, (buf + 7), dataBufLen)){
             com_txBufLen = 0;
             com_txBuf[com_txBufLen++] = addr;
             com_txBuf[com_txBufLen++] = cmd;

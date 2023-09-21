@@ -17,7 +17,7 @@
 #define EDIT_WIDTH_OFFSET       1
 #define MAX_STR_SIZE            1024
 #define CRC_CAL_TIMEOUT         10      // ms
-#define IAP_DOWNLOAD_PACK_SIZE  128     // bytes
+#define IAP_DOWNLOAD_PACK_SIZE  1024	// bytes
 
 #define EDIT_DISPLAY_APPEND(str) \
     do{\
@@ -50,11 +50,11 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    Communicate(HWND, UINT, WPARAM, LPARAM);
 VOID CALLBACK       TimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime);      // 计时器回调函数
 BOOL                EditCmdFriendlyUpdate(PTCHAR inBuf, UINT inSize, PTCHAR outBuf, PUINT outSize);
-unsigned short getCRC16(volatile uint8_t *ptr, uint8_t len);
+unsigned short getCRC16(volatile uint8_t *ptr, uint16_t len);
 VOID translateStrToHex(PTCHAR str, PUINT8 hexBuf, PUINT8 hexBufLen);
 VOID translateHexToStr(PTCHAR str, UINT strSiz, LPCTSTR header, PUINT8 hexBuf, UINT8 hexBufLen);
 // IAP下载
-BOOL packageDataSendAndReceive(UINT16 index, PUINT8 data, UINT8 dataLen);
+BOOL packageDataSendAndReceive(UINT16 index, PUINT8 data, UINT16 dataLen);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -201,7 +201,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     UINT16 packageNum = 0;
     UINT32 i = 0;
     UINT8 packageData[IAP_DOWNLOAD_PACK_SIZE] = { 0 };
-    UINT8 lastPackSize = 0;
+    UINT16 lastPackSize = 0;
 
     switch (message)
     {
@@ -416,7 +416,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                         // 获取数据
                         fread(packageData, 1,\
                             (i != (packageNum - 1))? IAP_DOWNLOAD_PACK_SIZE : lastPackSize, fp);
-                        if (packageDataSendAndReceive(i, packageData, \
+                        if (packageDataSendAndReceive((i * 8), packageData, \
                             (i != (packageNum - 1)) ? IAP_DOWNLOAD_PACK_SIZE : lastPackSize)) {
                             wsprintf(tempStrBuf, TEXT("发送数据包：%d/%d\t[成功]\r\n"), (i + 1), packageNum);
                             EDIT_DISPLAY_APPEND(tempStrBuf);
@@ -581,7 +581,7 @@ INT_PTR CALLBACK Communicate(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPar
 * @brief  calculate MODBUS CRC16.
 * @retval CRC16
 */
-unsigned short getCRC16(volatile uint8_t *ptr, uint8_t len)
+unsigned short getCRC16(volatile uint8_t *ptr, uint16_t len)
 {
     uint8_t  i;
     unsigned short crc = 0xFFFF;
@@ -690,31 +690,47 @@ BOOL EditCmdFriendlyUpdate(PTCHAR inBuf, UINT inSize, PTCHAR outBuf, PUINT outSi
     return TRUE;
 }
 
-BOOL packageDataSendAndReceive(UINT16 index, PUINT8 data, UINT8 dataLen) {
-    UINT8 tempU8buf[256] = {0};
+BOOL packageDataSendAndReceive(UINT16 index, PUINT8 data, UINT16 dataLen) {
+    UINT8 tempU8buf[1200] = {0};
     UINT16 crc16 = 0;
-    UINT8 len = dataLen;
+    UINT16 len = 0;
+	UINT8 revLen = 0;
+	/* 计算发送的数据长度 */
+	if ((dataLen % 128) != 0) {
+		len = ((UINT16)((dataLen / 128) + 1)) * 128;
+	}
+	else {
+		len = dataLen;
+	}
+	UINT16 lenBk = len;
+	/* 开始发送 */
     tempU8buf[0] = deviceID;
     tempU8buf[1] = 0x10;
     tempU8buf[2] = (index >> 8) & 0xFF;
     tempU8buf[3] = index & 0xFF;
     tempU8buf[4] = 0;
-    tempU8buf[5] = len / 2;
-    tempU8buf[6] = len;
-    memcpy(tempU8buf + 7, data, len);
-    len += 7;
+    tempU8buf[5] = len / 128;
+    tempU8buf[6] = len / 64;
+	if ((dataLen % 128) != 0) {
+		memcpy(tempU8buf + 7, data, dataLen);
+		memset(tempU8buf + 7 + dataLen, 0xFF, (len - dataLen));
+	}
+	else {
+		memcpy(tempU8buf + 7, data, len);
+	}
+	len += 7;
     crc16 = getCRC16(tempU8buf, len);
     tempU8buf[len++] = crc16 & 0xFF;
     tempU8buf[len++] = (crc16 >> 8) & 0xFF;
     serialPortTransmit(tempU8buf, len);
-    serialPortReceive(tempU8buf, &len, 200);
+    serialPortReceive(tempU8buf, &revLen, 200);
     /* simple check */
     crc16 = getCRC16(tempU8buf, 6);
     if ( (crc16 == (UINT16)((tempU8buf[7] << 8) | tempU8buf[6]))    &&\
          (tempU8buf[0] == deviceID)                                 &&\
          (tempU8buf[1] == 0x10)                                     &&\
          (index == (UINT16)((tempU8buf[2] << 8) | tempU8buf[3]))    &&\
-         ((dataLen / 2) == (UINT16)((tempU8buf[4] << 8) | tempU8buf[5]))
+         ((lenBk / 128) == (UINT16)((tempU8buf[4] << 8) | tempU8buf[5]))
     ){
         return TRUE;
     }

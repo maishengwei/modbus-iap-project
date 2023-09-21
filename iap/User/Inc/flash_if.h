@@ -79,6 +79,6 @@ uint32_t FLASH_If_Erase(uint32_t start, uint32_t end);
 uint32_t FLASH_If_GetWriteProtectionStatus(void);
 uint32_t FLASH_If_Write(uint32_t destination, uint32_t *p_source, uint32_t length);
 uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate);
-uint32_t FLASH_If_Write128Byte(uint16_t fileIndex, uint8_t *dataBuf, uint8_t dataLen);
+uint32_t FLASH_If_Write1KByte(uint16_t fileIndex, uint8_t *dataBuf, uint32_t dataLen);
 
 #endif  /* __FLASH_IF_H */

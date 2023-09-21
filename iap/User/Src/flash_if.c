@@ -218,7 +218,7 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
 }
 
 /**
-  * @brief  This function writes a data buffer(128 byte max.) in flash after erase.
+  * @brief  This function writes a data buffer(1024 byte max.) in flash after erase.
   * @param  fileIndex: index to locate 128 byte package
   * @param  dataBuf: pointer on buffer with data to write
   * @param  dataLen: length of data buffer (unit is byte)
@@ -226,7 +226,7 @@ uint32_t FLASH_If_WriteProtectionConfig(uint32_t protectionstate)
   *         1: Error occurred while writing data in Flash memory
   *         2: Written Data in flash memory is different from expected one
   */
-uint32_t FLASH_If_Write128Byte(uint16_t fileIndex, uint8_t *dataBuf, uint8_t dataLen){
+uint32_t FLASH_If_Write1KByte(uint16_t fileIndex, uint8_t *dataBuf, uint32_t dataLen){
     uint32_t packTotalNumInPage = (FLASH_PAGE_SIZE / IAP_PACKAGE_SIZE);
     /* locate which flash page */
     uint32_t flashPageIndex = (APPLICATION_ADDRESS - ADDR_FLASH_START) / FLASH_PAGE_SIZE \

@@ -14,8 +14,8 @@ extern UART_HandleTypeDef huart3;
 #define RS485_1_DE_EN       {RS485_1_RE_ON; RS485_1_DE_ON;}
 #define IS_RS485_1_RE_EN    (IS_RS485_1_DE_OFF && IS_RS485_1_RE_OFF)
 
-#define COM_RX_MAX_SIZE     256
-#define COM_TX_MAX_SIZE     256
+#define COM_RX_MAX_SIZE     1500
+#define COM_TX_MAX_SIZE     64
 
 void communicationInit(void);
 void comPollingData(void);
